@@ -7,14 +7,7 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.net.URL;
 
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JTextArea;
-import javax.swing.JTextField;
-import javax.swing.ProgressMonitor;
+import javax.swing.*;
 
 /**
  *
@@ -23,18 +16,16 @@ import javax.swing.ProgressMonitor;
  * windowbuilder pro 를 이용해서 만들었습니다.
  */
 public class DiffCompare extends JFrame {
+	private static final String[] HASH_ALGO = {"MD5", "SHA-1", "SHA-256", "SHA-512"};
+
 	public DiffCompare() {
-		setDefaultCloseOperation(EXIT_ON_CLOSE);
+		setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 		setTitle("파일비교 V1.0 by hasun");
 		setResizable(false);
 		setSize(687, 410);
 
 		setfile1 = new JButton("파일1 설정");
-		setfile1.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				fname1.setText(selectFile());
-			}
-		});
+		setfile1.addActionListener(e -> fname1.setText(selectFile()));
 		setfile1.setBounds(546, 123, 123, 23);
 
 		JLabel subject = new JLabel("파일비교기 V1.0");
@@ -42,32 +33,24 @@ public class DiffCompare extends JFrame {
 		subject.setFont(new Font("굴림", Font.PLAIN, 28));
 
 		reset1 = new JButton("파일1 초기화");
-		reset1.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				f1 = null;
-				fname1.setText("");
-				updateHashButton();
-			}
-		});
+		reset1.addActionListener(e -> {
+            f1 = null;
+            fname1.setText("");
+            updateHashButton();
+        });
 		reset1.setBounds(546, 90, 123, 23);
 
 		reset2 = new JButton("파일2 초기화");
-		reset2.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				f2 = null;
-				fname2.setText("");
-				updateHashButton();
-			}
-		});
+		reset2.addActionListener(e -> {
+            f2 = null;
+            fname2.setText("");
+            updateHashButton();
+        });
 		reset2.setBounds(546, 196, 123, 23);
 		getContentPane().setLayout(null);
 
 		reset = new JButton("전체 초기화");
-		reset.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				resetAll();
-			}
-		});
+		reset.addActionListener(e -> resetAll());
 		reset.setBounds(128, 290, 122, 62);
 		getContentPane().add(reset);
 
@@ -102,17 +85,14 @@ public class DiffCompare extends JFrame {
 							updateHashButton();
 							setBusy();
 							try {
-								IProgressUpdate pu = new IProgressUpdate() {
-									@Override
-									public void updateProgress(int progress) {
-										if (pm.isCanceled()) {
-											cancelOperation();
-										}
-										pm.setProgress(progress);
-									}
-								};
-								f1 = new FileHashCaculator(file1, pu);
-								f2 = new FileHashCaculator(file2, pu);
+								IProgressUpdateNotifier pu = progress -> {
+                                    if (pm.isCanceled()) {
+                                        cancelOperation();
+                                    }
+                                    pm.setProgress(progress);
+                                };
+								f1 = new FileHashCaculator(file1, HASH_ALGO, pu);
+								f2 = new FileHashCaculator(file2, HASH_ALGO, pu);
 								pm.setNote("해시값 계산중 - 파일1");
 								f1.start();
 								if (canceled)
@@ -133,6 +113,7 @@ public class DiffCompare extends JFrame {
 											JOptionPane.INFORMATION_MESSAGE);
 								}
 							} catch (Exception ex) {
+								ex.printStackTrace();
 								JOptionPane.showMessageDialog(
 										DiffCompare.this,
 										ex.getClass().getName() + ":"
@@ -173,11 +154,7 @@ public class DiffCompare extends JFrame {
 		getContentPane().add(setfile1);
 
 		setfile2 = new JButton("파일2 설정");
-		setfile2.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				fname2.setText(selectFile());
-			}
-		});
+		setfile2.addActionListener(e -> fname2.setText(selectFile()));
 		setfile2.setBounds(546, 229, 123, 23);
 		getContentPane().add(setfile2);
 		getContentPane().add(reset2);
@@ -208,24 +185,20 @@ public class DiffCompare extends JFrame {
 		getContentPane().add(status);
 
 		extraf1 = new JButton("파일1 해시값");
-		extraf1.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				JTextArea text = new JTextArea(f1.toString());
-				text.setEditable(false);
-				JOptionPane.showMessageDialog(DiffCompare.this, text,"파일1 속성",JOptionPane.PLAIN_MESSAGE);
-			}
-		});
+		extraf1.addActionListener(e -> {
+            JTextArea text = new JTextArea(f1.toString());
+            text.setEditable(false);
+            JOptionPane.showMessageDialog(DiffCompare.this, text,"파일1 속성",JOptionPane.PLAIN_MESSAGE);
+        });
 		extraf1.setBounds(546, 283, 123, 23);
 		getContentPane().add(extraf1);
 
 		extraf2 = new JButton("파일2 해시값");
-		extraf2.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				JTextArea text = new JTextArea(f2.toString());
-				text.setEditable(false);
-				JOptionPane.showMessageDialog(DiffCompare.this, text,"파일2 속성",JOptionPane.PLAIN_MESSAGE);
-			}
-		});
+		extraf2.addActionListener(e -> {
+            JTextArea text = new JTextArea(f2.toString());
+            text.setEditable(false);
+            JOptionPane.showMessageDialog(DiffCompare.this, text,"파일2 속성",JOptionPane.PLAIN_MESSAGE);
+        });
 		extraf2.setBounds(546, 330, 123, 23);
 		getContentPane().add(extraf2);
 
@@ -240,7 +213,7 @@ public class DiffCompare extends JFrame {
 	 * 파일선택창을 띄웁니다.
 	 * @return 파일의 절대경로
 	 */
-	public String selectFile() {
+	private String selectFile() {
 		FileDialog fd = new FileDialog(this, "파일선택", FileDialog.LOAD);
 		String spr = System.getProperty("file.separator");
 		fd.setDirectory("C:" + spr);
@@ -251,7 +224,7 @@ public class DiffCompare extends JFrame {
 		return fd.getDirectory() + fd.getFile();
 	}
 
-	public void setBusy() {
+	private void setBusy() {
 		status.setText("작업 중입니다");
 		reset.setEnabled(false);
 		start.setEnabled(false);
@@ -263,7 +236,7 @@ public class DiffCompare extends JFrame {
 		fname2.setEditable(false);
 	}
 
-	public void setIdle() {
+    private void setIdle() {
 		status.setText("");
 		reset.setEnabled(true);
 		start.setEnabled(true);
